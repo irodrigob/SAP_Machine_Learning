@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_CLAS" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <VSEOCLASS>
+    <CLSNAME>ZCL_ML_API_BASE</CLSNAME>
+    <LANGU>E</LANGU>
+    <DESCRIPT>ML - SAP Leonardo API base</DESCRIPT>
+    <STATE>1</STATE>
+    <CLSCCINCL>X</CLSCCINCL>
+    <FIXPT>X</FIXPT>
+    <UNICODE>X</UNICODE>
+   </VSEOCLASS>
+   <DESCRIPTIONS>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ML_API_BASE</CLSNAME>
+     <CMPNAME>CALL_API</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Call API</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ML_API_BASE</CLSNAME>
+     <CMPNAME>CONSTRUCTOR</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>CONSTRUCTOR</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ML_API_BASE</CLSNAME>
+     <CMPNAME>CREATE_CONNECTION</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Create connection to API</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ML_API_BASE</CLSNAME>
+     <CMPNAME>FILL_CONFIGURATION</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Fill configuration</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ML_API_BASE</CLSNAME>
+     <CMPNAME>SEND_REQUEST_API</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Send request API to REST client</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_ML_API_BASE</CLSNAME>
+     <CMPNAME>VALIDATE_CONF_CONNECTION</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Validate configuration for the connection</DESCRIPT>
+    </SEOCOMPOTX>
+   </DESCRIPTIONS>
+  </asx:values>
+ </asx:abap>
+</abapGit>

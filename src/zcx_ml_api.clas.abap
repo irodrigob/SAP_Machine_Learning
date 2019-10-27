@@ -1,0 +1,41 @@
+class ZCX_ML_API definition
+  public
+  inheriting from CX_STATIC_CHECK
+  create public .
+
+public section.
+
+  constants CONF_MISSING type SOTR_CONC value '080027C18A1F1ED9BE9CFDB94045D1BE' ##NO_TEXT.
+  constants ERROR_CONNECTION type SOTR_CONC value '080027C18A1F1ED9BE9D285DC76CD1C6' ##NO_TEXT.
+  constants ERROR_SEND_REQUEST type SOTR_CONC value '080027C18A1F1ED9BE9F14CF1A4D1220' ##NO_TEXT.
+  data MV_HTTP_STATUS_CODE type STRING .
+  data MV_HTTP_STATUS_TEXT type STRING .
+  data MV_HTPP_RESPONSE type STRING .
+
+  methods CONSTRUCTOR
+    importing
+      !TEXTID like TEXTID optional
+      !PREVIOUS like PREVIOUS optional
+      !MV_HTTP_STATUS_CODE type STRING optional
+      !MV_HTTP_STATUS_TEXT type STRING optional
+      !MV_HTPP_RESPONSE type STRING optional .
+protected section.
+private section.
+ENDCLASS.
+
+
+
+CLASS ZCX_ML_API IMPLEMENTATION.
+
+
+  method CONSTRUCTOR.
+CALL METHOD SUPER->CONSTRUCTOR
+EXPORTING
+TEXTID = TEXTID
+PREVIOUS = PREVIOUS
+.
+me->MV_HTTP_STATUS_CODE = MV_HTTP_STATUS_CODE .
+me->MV_HTTP_STATUS_TEXT = MV_HTTP_STATUS_TEXT .
+me->MV_HTPP_RESPONSE = MV_HTPP_RESPONSE .
+  endmethod.
+ENDCLASS.
