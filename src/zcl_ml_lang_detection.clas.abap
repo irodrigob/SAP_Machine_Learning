@@ -1,7 +1,6 @@
 CLASS zcl_ml_lang_detection DEFINITION
   PUBLIC
-  INHERITING FROM zcl_ml_api_base
-  FINAL
+  INHERITING FROM zcl_ml_services
   CREATE PUBLIC .
 
   PUBLIC SECTION.
@@ -20,7 +19,7 @@ CLASS zcl_ml_lang_detection DEFINITION
     METHODS constructor
       IMPORTING
         iv_langu TYPE sylangu DEFAULT sy-langu.
-    METHODS call_api REDEFINITION.
+    METHODS zif_ml_services~call_api REDEFINITION.
 
   PROTECTED SECTION.
     METHODS fill_configuration REDEFINITION.
@@ -33,28 +32,6 @@ ENDCLASS.
 CLASS zcl_ml_lang_detection IMPLEMENTATION.
 
 
-  METHOD call_api.
-    " Primer paso es establecer la conexión
-    create_connection(  ).
-
-    " Se pasa los valores
-    DATA(ls_request) = CORRESPONDING ts_request( is_request ).
-
-    " Se convierte la estructura en un JSON para poderlo pasar al body
-
-    " Se rellena la estructura para el envio de datos REST
-    DATA(ls_request_api) = VALUE ts_request_api( request_type = if_rest_media_type=>gc_appl_json
-                                                  post-body = /ui2/cl_json=>serialize( data = ls_request pretty_name = /ui2/cl_json=>pretty_mode-camel_case ) ).
-    " Se envian los datos
-    send_request_api( is_request = ls_request_api  ).
-
-    " Se recuperarán
-    get_response_api( IMPORTING es_response = DATA(ls_response) ).
-
-
-  ENDMETHOD.
-
-
   METHOD constructor.
     super->constructor( iv_langu = iv_langu ).
 
@@ -64,9 +41,27 @@ CLASS zcl_ml_lang_detection IMPLEMENTATION.
 
 
   METHOD fill_configuration.
-    zif_ml_resource_conf~mv_http_method = if_http_request=>co_request_method_post.
-    zif_ml_resource_conf~mv_resource = |{ zif_ml_data=>cs_api_connection-url }/ml/api/v2alpha1/text/lang-detect/|.
-    zif_ml_resource_conf~mv_api_key = 'VIBTf10lAEGWm6Ae0KAZC8aong7BtNd3'.
-    zif_ml_resource_conf~mv_accept = 'application/json'.
+    mo_resource_conf->mv_http_method = if_http_request=>co_request_method_post.
+    mo_resource_conf->mv_resource = |{ zif_ml_data=>cs_api_connection-url }/ml/api/v2alpha1/text/lang-detect/|.
+    mo_resource_conf->mv_api_key = 'VIBTf10lAEGWm6Ae0KAZC8aong7BtNd3'.
+    mo_resource_conf->mv_accept = 'application/json'.
+  ENDMETHOD.
+
+
+  METHOD zif_ml_services~call_api.
+    " Se pasa los valores
+    DATA(ls_request) = CORRESPONDING ts_request( is_request ).
+
+    " Se rellena la estructura para el envio de datos REST
+    DATA(ls_request_api) = VALUE zcl_ml_rest_api=>ts_request_api( request_type = if_rest_media_type=>gc_appl_json
+                                                  post-body = /ui2/cl_json=>serialize( data = ls_request pretty_name = /ui2/cl_json=>pretty_mode-camel_case ) ).
+
+    TRY.
+        mo_rest_api->call_api( EXPORTING is_request  = ls_request_api
+                               IMPORTING es_response = DATA(ls_response) ).
+
+      CATCH zcx_ml_api INTO DATA(lo_excep).
+    ENDTRY.
+
   ENDMETHOD.
 ENDCLASS.
