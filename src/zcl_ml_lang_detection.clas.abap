@@ -41,10 +41,12 @@ CLASS zcl_ml_lang_detection IMPLEMENTATION.
 
 
   METHOD fill_configuration.
-    mo_resource_conf->mv_http_method = if_http_request=>co_request_method_post.
-    mo_resource_conf->mv_resource = |{ zif_ml_data=>cs_api_connection-url }/ml/api/v2alpha1/text/lang-detect/|.
-    mo_resource_conf->mv_api_key = 'VIBTf10lAEGWm6Ae0KAZC8aong7BtNd3'.
-    mo_resource_conf->mv_accept = 'application/json'.
+
+    " Se pasa la configuración del servicio a la clase encargada de hacer las llamadas
+    mo_rest_api->set_api_configuration( is_services_conf = VALUE #( http_method = if_http_request=>co_request_method_post
+                                                                    resource = |{ zif_ml_data=>cs_api_connection-url }/ml/api/v2alpha1/text/lang-detect/|
+                                                                    api_key = 'VIBTf10lAEGWm6Ae0KAZC8aong7BtNd3'
+                                                                    accept = 'application/json' ) ).
   ENDMETHOD.
 
 
@@ -56,11 +58,17 @@ CLASS zcl_ml_lang_detection IMPLEMENTATION.
     DATA(ls_request_api) = VALUE zcl_ml_rest_api=>ts_request_api( request_type = if_rest_media_type=>gc_appl_json
                                                   post-body = /ui2/cl_json=>serialize( data = ls_request pretty_name = /ui2/cl_json=>pretty_mode-camel_case ) ).
 
+
     TRY.
+
         mo_rest_api->call_api( EXPORTING is_request  = ls_request_api
                                IMPORTING es_response = DATA(ls_response) ).
 
       CATCH zcx_ml_api INTO DATA(lo_excep).
+      " Para la excepcion de la API propaga la misma excepcion captura
+        RAISE EXCEPTION TYPE zcx_ml_api
+          EXPORTING
+            textid = lo_excep->textid.
     ENDTRY.
 
   ENDMETHOD.

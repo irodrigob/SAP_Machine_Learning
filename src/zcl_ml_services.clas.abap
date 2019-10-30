@@ -10,7 +10,6 @@ CLASS zcl_ml_services DEFINITION
     INTERFACES zif_ml_services
       ALL METHODS ABSTRACT .
   PROTECTED SECTION.
-    DATA mo_resource_conf TYPE REF TO zif_ml_services_conf.
     DATA mo_rest_api TYPE REF TO zcl_ml_rest_api.
     DATA mv_langu TYPE sy-langu.
 

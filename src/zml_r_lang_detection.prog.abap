@@ -19,11 +19,12 @@ START-OF-SELECTION.
   DATA(ls_response) = VALUE zcl_ml_lang_detection=>ts_request( ).
 
   TRY.
-      mo_lang_detection->call_api(
+      mo_lang_detection->zif_ml_services~call_api(
         EXPORTING
           is_request  = VALUE zcl_ml_lang_detection=>ts_request( message = p_text )
       IMPORTING
         es_response =  ls_response ).
     CATCH zcx_ml_api INTO DATA(lo_excep).
-      BREAK-POINT.
+      DATA(lv_msg) = lo_excep->get_text( ).
+      WRITE:/ lv_msg.
   ENDTRY.

@@ -5,6 +5,12 @@ CLASS zcl_ml_rest_api DEFINITION
 
   PUBLIC SECTION.
 
+    TYPES: BEGIN OF ts_services_conf,
+             resource    TYPE string,
+             api_key     TYPE string,
+             http_method TYPE string,
+             accept      TYPE string,
+           END OF ts_services_conf.
     TYPES: BEGIN OF ts_request_api.
         INCLUDE TYPE zcl_ca_rest_http_services=>ts_request_rest.
     TYPES:
@@ -42,13 +48,13 @@ CLASS zcl_ml_rest_api DEFINITION
     "! @parameter io_api_configuration | <p class="shorttext synchronized" lang="en">Save the configuration of services</p>
     METHODS set_api_configuration
       IMPORTING
-        !io_services_conf TYPE REF TO zif_ml_services_conf.
+        !is_services_conf TYPE ts_services_conf.
   PROTECTED SECTION.
 
 
 
     DATA mv_langu TYPE sylangu .
-    DATA mo_services_conf TYPE REF TO zif_ml_services_conf.
+    DATA ms_services_conf TYPE ts_services_conf.
     "! <p class="shorttext synchronized" lang="en">Fill configuration</p>
     "! Fill the configuration for the connection to the API
     METHODS fill_configuration.
@@ -109,19 +115,19 @@ CLASS zcl_ml_rest_api IMPLEMENTATION.
     TRY.
 
         " Se conecta con la API
-        create_rest_client_by_url( iv_url = mo_services_conf->mv_resource ).
+*        create_rest_client_by_url( iv_url = ms_services_conf-resource ).
+        create_rest_client( iv_host = |{ zif_ml_data=>cs_api_connection-url }| iv_is_https = abap_true ).
+        set_request_uri( |{ ms_services_conf-resource }| ).
 
-        " Se pasa el path del servicio
-*        set_request_uri( zif_ml_resource_conf~mv_resource ).
 
         " Se pasa el método de comunicación HTTP
-        set_request_method( mo_services_conf->mv_http_method ).
+        set_request_method( ms_services_conf-http_method ).
 
         " Se pasa el "accept". Si no esta informada se informa el por defecto que es el JSON
-        set_header_value( iv_name  = 'Accept' iv_value = COND #( WHEN mo_services_conf->mv_accept IS INITIAL THEN zif_ml_data=>cs_api_connection-default_accept ELSE mo_services_conf->mv_accept ) ).
+        set_header_value( iv_name  = 'Accept' iv_value = COND #( WHEN ms_services_conf-accept IS INITIAL THEN zif_ml_data=>cs_api_connection-default_accept ELSE ms_services_conf-accept ) ).
 
         " Se pasa la API Key
-        set_header_value( iv_name  = 'APIKey' iv_value = mo_services_conf->mv_api_key ).
+        set_header_value( iv_name  = 'APIKey' iv_value = ms_services_conf-api_key ).
 
         mo_http_client->propertytype_logon_popup = if_http_client=>co_disabled.
 
@@ -166,17 +172,18 @@ CLASS zcl_ml_rest_api IMPLEMENTATION.
   ENDMETHOD.
 
 
+  METHOD set_api_configuration.
+    ms_services_conf = is_services_conf.
+
+  ENDMETHOD.
+
+
   METHOD validate_conf_connection.
     " Si algunos de los parámetros de configuración principales esta en blanco se lanza excepción ya que son necesarios
-    IF mo_services_conf->mv_api_key IS INITIAL OR mo_services_conf->mv_resource IS INITIAL OR mo_services_conf->mv_http_method IS INITIAL.
+    IF ms_services_conf-api_key IS INITIAL OR ms_services_conf-resource IS INITIAL OR ms_services_conf-http_method IS INITIAL.
       RAISE EXCEPTION TYPE zcx_ml_api
         EXPORTING
           textid = zcx_ml_api=>conf_missing.
     ENDIF.
   ENDMETHOD.
-  METHOD set_api_configuration.
-    mo_services_conf = io_services_conf.
-
-  ENDMETHOD.
-
 ENDCLASS.
