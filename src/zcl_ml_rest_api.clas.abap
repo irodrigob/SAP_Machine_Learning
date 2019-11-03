@@ -4,7 +4,34 @@ CLASS zcl_ml_rest_api DEFINITION
   CREATE PUBLIC .
 
   PUBLIC SECTION.
-
+    TYPES: BEGIN OF ts_error_resp_500,
+             timestamp TYPE timestamp,
+             status    TYPE i,
+             error     TYPE string,
+             exception TYPE string,
+             message   TYPE string,
+             path      TYPE string,
+           END OF ts_error_resp_500.
+    TYPES: BEGIN OF ts_error_resp_400,
+             error             TYPE string,
+             error_description TYPE string,
+           END OF ts_error_resp_400.
+    TYPES: BEGIN OF ts_error_resp_401_dtl,
+             errorcode TYPE string,
+           END OF ts_error_resp_401_dtl.
+    TYPES: BEGIN OF ts_error_resp_401_fault,
+             faultstring TYPE string,
+             detail      TYPE ts_error_resp_401_dtl,
+           END OF ts_error_resp_401_fault.
+    TYPES: BEGIN OF ts_error_resp_401,
+             fault TYPE ts_error_resp_401_fault,
+           END OF ts_error_resp_401.
+    TYPES: BEGIN OF ts_error_response_api,
+             status       TYPE string,
+             status_error TYPE string,
+             message      TYPE string,
+             exception    TYPE string,
+           END OF ts_error_response_api.
     TYPES: BEGIN OF ts_services_conf,
              resource    TYPE string,
              api_key     TYPE string,
@@ -17,6 +44,8 @@ CLASS zcl_ml_rest_api DEFINITION
            END OF ts_request_api.
     TYPES: BEGIN OF ts_response_api,
              response       TYPE string,
+             there_error    TYPE sap_bool,
+             error_response TYPE ts_error_response_api,
              content_length TYPE string,
              content_type   TYPE string,
            END OF ts_response_api.
@@ -115,9 +144,9 @@ CLASS zcl_ml_rest_api IMPLEMENTATION.
     TRY.
 
         " Se conecta con la API
-*        create_rest_client_by_url( iv_url = ms_services_conf-resource ).
-        create_rest_client( iv_host = |{ zif_ml_data=>cs_api_connection-url }| iv_is_https = abap_true ).
-        set_request_uri( |{ ms_services_conf-resource }| ).
+        create_rest_client_by_url( iv_url = ms_services_conf-resource ).
+*        create_rest_client( iv_host = |{ zif_ml_data=>cs_api_connection-url }| iv_is_https = abap_true ).
+*        set_request_uri( |{ ms_services_conf-resource }| ).
 
 
         " Se pasa el método de comunicación HTTP
@@ -148,13 +177,57 @@ CLASS zcl_ml_rest_api IMPLEMENTATION.
 
 
   METHOD get_response_api.
+    DATA ls_error_401 TYPE ts_error_resp_401.
+    DATA ls_error_500 TYPE ts_error_resp_500.
+    DATA ls_error_400 TYPE ts_error_resp_400.
+    CLEAR: es_response.
     TRY.
         " Se obtiene la respuesta del servicio REST
         get_response( IMPORTING es_response = DATA(ls_response) ).
 
-        BREAK-POINT.
+        es_response-there_error = abap_false.
+        es_response-response = ls_response-response.
+        es_response-content_length = ls_response-content_length.
+        es_response-content_type = ls_response-content_type.
+
 
       CATCH zcx_ca_rest_http_services INTO DATA(lo_excep).
+        es_response-there_error = abap_true. " Se indica que hay error
+
+        " Valores genéricos indistintamente del tipo de error.
+        es_response-error_response-status = lo_excep->mv_status_code.
+        es_response-error_response-status_error = lo_excep->mv_status_text.
+
+        "De momentos hay tres errores distintos: 401 sin autorizacion, 400 parámetros erroneos y 500 que
+        " cuando se pasa la URL del servicio incorrectamente
+        " El 500 se le considera como "otros" porque es una estructura de datos
+        " Por ello la estructura de error serán común para ambos.
+        CASE lo_excep->mv_status_code.
+          WHEN '401'. " Unauthorized
+            /ui2/cl_json=>deserialize( EXPORTING json = lo_excep->mv_content_response
+                                        CHANGING data = ls_error_401 ).
+
+
+            es_response-error_response-message = ls_error_401-fault-faultstring.
+            es_response-error_response-exception = ls_error_401-fault-detail-errorcode.
+
+          WHEN 400. " Invalid params
+            /ui2/cl_json=>deserialize( EXPORTING json = lo_excep->mv_content_response
+                                         CHANGING data = ls_error_400 ).
+
+            es_response-error_response-message = ls_error_400-error.
+            es_response-error_response-exception = ls_error_400-error_description.
+
+
+          WHEN 500. " Bad request
+            " La excepción se convierte a la estructura de errores ya que tiene un formato fijo
+            /ui2/cl_json=>deserialize( EXPORTING json = lo_excep->mv_content_response
+                                       CHANGING data = ls_error_500 ).
+
+            es_response-error_response-message = ls_error_500-message.
+            es_response-error_response-exception = ls_error_500-exception.
+
+        ENDCASE.
     ENDTRY.
   ENDMETHOD.
 

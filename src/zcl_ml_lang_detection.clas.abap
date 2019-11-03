@@ -24,12 +24,13 @@ CLASS zcl_ml_lang_detection DEFINITION
   PROTECTED SECTION.
     METHODS fill_configuration REDEFINITION.
 
+
   PRIVATE SECTION.
 ENDCLASS.
 
 
 
-CLASS zcl_ml_lang_detection IMPLEMENTATION.
+CLASS ZCL_ML_LANG_DETECTION IMPLEMENTATION.
 
 
   METHOD constructor.
@@ -44,13 +45,18 @@ CLASS zcl_ml_lang_detection IMPLEMENTATION.
 
     " Se pasa la configuración del servicio a la clase encargada de hacer las llamadas
     mo_rest_api->set_api_configuration( is_services_conf = VALUE #( http_method = if_http_request=>co_request_method_post
-                                                                    resource = |{ zif_ml_data=>cs_api_connection-url }/ml/api/v2alpha1/text/lang-detect/|
-                                                                    api_key = 'VIBTf10lAEGWm6Ae0KAZC8aong7BtNd3'
-                                                                    accept = 'application/json' ) ).
+                                                                    resource = |{ zif_ml_data=>cs_api_connection-url }/ml/api/v2alpha1/text/lang-detect|
+                                                                    api_key = |VIBTf10lAEGWm6Ae0KAZC8aong7BtNd3|
+                                                                    accept = |application/json| ) ).
   ENDMETHOD.
 
 
   METHOD zif_ml_services~call_api.
+    DATA ls_response TYPE ts_response.
+
+    CLEAR: es_service_response.
+    es_service_response-there_error = abap_false.
+
     " Se pasa los valores
     DATA(ls_request) = CORRESPONDING ts_request( is_request ).
 
@@ -62,10 +68,38 @@ CLASS zcl_ml_lang_detection IMPLEMENTATION.
     TRY.
 
         mo_rest_api->call_api( EXPORTING is_request  = ls_request_api
-                               IMPORTING es_response = DATA(ls_response) ).
+                               IMPORTING es_response = DATA(ls_response_serv) ).
+
+        " Si hay error se notifica en el parámetro de salida y se devuelve el error
+        IF ls_response_serv-there_error = abap_true.
+          es_service_response-there_error = abap_true.
+          es_service_response-error_response = ls_response_serv-error_response.
+
+        ELSE.
+          " Se devuelve la estructura para que pueda ser usada dinamicamente
+          es_service_response-response_structure = |ZCL_ML_LANG_DETECTION=>TS_RESPONSE|.
+
+
+          " Se crea la variable donde se guardará el resultado
+          CREATE DATA es_service_response-response TYPE (es_service_response-response_structure).
+          ASSIGN es_service_response-response->* TO FIELD-SYMBOL(<response>).
+
+          " Si no hay error se convierte el string a la estructura de salida
+          " Este método por la definición data no permite usar punteros, por ello hay que usar una variable local
+
+          /ui2/cl_json=>deserialize( EXPORTING json = ls_response_serv-response
+                                               pretty_name = /ui2/cl_json=>pretty_mode-camel_case
+                                     CHANGING data = ls_response ).
+
+          " Luego de la variable local se mueve al puntero
+          <response> = ls_response.
+
+        ENDIF.
+
+
 
       CATCH zcx_ml_api INTO DATA(lo_excep).
-      " Para la excepcion de la API propaga la misma excepcion captura
+        " Para la excepcion de la API propaga la misma excepcion captura
         RAISE EXCEPTION TYPE zcx_ml_api
           EXPORTING
             textid = lo_excep->textid.

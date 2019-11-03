@@ -15,6 +15,12 @@
      <ENTRY>Program ZML_R_LANG_DETECTION</ENTRY>
      <LENGTH>28</LENGTH>
     </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_TEXT</KEY>
+     <ENTRY>Text</ENTRY>
+     <LENGTH>12</LENGTH>
+    </item>
    </TPOOL>
   </asx:values>
  </asx:abap>
